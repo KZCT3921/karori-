@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>カロリー計算</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f1f5f8;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .screen {
+      background-color: #fff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 500px;
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 30px;
+    }
+
+    .form-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .form-container input {
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.3s ease;
+    }
+
+    .form-container input:focus {
+      border-color: #007aff;
+    }
+
+    .form-container button {
+      padding: 12px 20px;
+      font-size: 16px;
+      background-color: #007aff;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .form-container button:hover {
+      background-color: #005ecb;
+    }
+
+    .results {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .results p {
+      font-size: 20px;
+      color: #333;
+      font-weight: bold;
+    }
+
+    .history {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+    }
+
+    .history h3 {
+      font-size: 22px;
+      color: #007aff;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .history ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .history li {
+      background-color: #f7f7f7;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history button {
+      background-color: #ff4d4d;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+
+    .history button:hover {
+      background-color: #ff3333;
+    }
+
+    .back-button {
+      display: block;
+      width: 150px;
+      margin: 30px auto;
+      padding: 12px;
+      background-color: #e0e0e0;
+      color: #333;
+      text-align: center;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 16px;
+    }
+
+    .back-button:hover {
+      background-color: #ccc;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="screen">
+    <h2>カロリー計算</h2>
+    
+    <div class="form-container">
+      <input type="text" id="foodName" placeholder="食べ物の名前">
+      <input type="number" id="calories" placeholder="カロリー (1食分)">
+      <input type="number" id="quantity" placeholder="食べた量">
+      <button onclick="calculateCalories()">計算する</button>
+    </div>
+
+    <div class="results">
+      <p id="totalCalories">合計カロリー: 0 kcal</p>
+      <p id="weightGain">体重増加予測: 0 kg</p> <!-- 体重増加の予測 -->
+    </div>
+
+    <!-- 食事履歴 -->
+    <div class="history">
+      <h3>食事履歴</h3>
+      <ul id="historyList">
+        <!-- 履歴がここに表示される -->
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // 履歴を取得して表示
+    function loadHistory() {
+      const history = JSON.parse(localStorage.getItem('mealHistory')) || [];
+      const historyList = document.getElementById('historyList');
+      historyList.innerHTML = ''; // リストをクリア
+      history.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.textContent = `${item.foodName} - ${item.totalCalories} kcal (体重増加予測: ${item.weightGain} kg)`;
+
+        // 削除ボタン
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = '削除';
+        deleteButton.onclick = () => deleteHistory(index);
+
+        li.appendChild(deleteButton);
+        historyList.appendChild(li);
+      });
+    }
+
+    // カロリー計算
+    function calculateCalories() {
+      const foodName = document.getElementById('foodName').value;
+      const caloriesPerServing = parseFloat(document.getElementById('calories').value);
+      const quantity = parseFloat(document.getElementById('quantity').value);
+
+      if (isNaN(caloriesPerServing) || isNaN(quantity) || caloriesPerServing <= 0 || quantity <= 0) {
+        alert('正しいカロリーと量を入力してください');
+        return;
+      }
+
+      const totalCalories = caloriesPerServing * quantity;
+      document.getElementById('totalCalories').textContent = `合計カロリー: ${totalCalories} kcal`;
+
+      // 体重増加予測の計算 (1kg = 7700kcal)
+      const weightGain = totalCalories / 7700; // 体重増加量
+      document.getElementById('weightGain').textContent = `体重増加予測: ${weightGain.toFixed(2)} kg`;  // 小数点2桁で表示
+
+      // 履歴に追加
+      const mealHistory = JSON.parse(localStorage.getItem('mealHistory')) || [];
+      mealHistory.push({
+        foodName: foodName,
+        totalCalories: totalCalories,
+        weightGain: weightGain.toFixed(2) // 履歴に保存する際にも2桁に丸める
+      });
+
+      // 履歴をlocalStorageに保存
+      localStorage.setItem('mealHistory', JSON.stringify(mealHistory));
+
+      // 履歴を更新
+      loadHistory();
+    }
+
+    // 履歴の削除
+    function deleteHistory(index) {
+      const mealHistory = JSON.parse(localStorage.getItem('mealHistory')) || [];
+      mealHistory.splice(index, 1); // 指定したインデックスのアイテムを削除
+      localStorage.setItem('mealHistory', JSON.stringify(mealHistory)); // 更新した履歴を保存
+      loadHistory(); // 履歴を再読み込み
+    }
+
+    // ページ読み込み時に履歴を表示
+    window.onload = loadHistory;
+  </script>
+
+</body>
+</html>
